@@ -1,14 +1,17 @@
 import 'dotenv/config';
 import { generateText, type ModelMessage } from 'ai';
 import { openai } from '@ai-sdk/openai';
-
 import { tools } from './tools/index.ts';
 import { SYSTEM_PROMPT } from './system/prompt.ts';
-
 import type { AgentCallbacks } from '../types.ts';
 import { executeTool } from './executeTools.ts';
+import { Laminar, getTracer } from '@lmnr-ai/lmnr';
 
 const MODEL_NAME = 'gpt-5-mini';
+
+Laminar.initialize({
+  projectApiKey: process.env.LMNR_API_KEY,
+});
 
 export async function runAgent(
   userMessage: string,
@@ -21,7 +24,13 @@ export async function runAgent(
     prompt: userMessage,
     system: SYSTEM_PROMPT,
     tools,
+    experimental_telemetry: {
+      isEnabled: true,
+      tracer: getTracer()
+    }
   });
+
+  await Laminar.flush();
 
   console.log(text, toolCalls);
 
